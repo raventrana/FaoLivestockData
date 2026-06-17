@@ -7,17 +7,15 @@ import seaborn as sns
 st.set_page_config(page_title="FAO Livestock & Crop Production Dashboard", layout="wide")
 
 # --- DATA LOADING (with caching so it stays fast) ---
-# NEW CODE (Correct Path)
-# --- DATA LOADING (with caching so it stays fast) ---
 GITHUB_USERNAME = "raventrana"
 REPO_NAME = "FaoLivestockData"
 FILE_PATH = "Production_Crops_Livestock_E_All_Data.csv.gz"
 CSV_URL = f"https://raw.githubusercontent.com/{GITHUB_USERNAME}/{REPO_NAME}/main/{FILE_PATH}"
+
 @st.cache_data
 def load_and_clean_data(url):
-    # Load dataset
-    # NEW CODE
-df = pd.read_csv(url, compression='gzip', low_memory=False)
+    # Load dataset natively reading the gzipped file
+    df = pd.read_csv(url, compression='gzip', low_memory=False)
     
     # Identify year columns (Y1961 - Y2024)
     year_cols = [col for col in df.columns if col.startswith('Y') and col[1:].isdigit() and len(col) == 5]
@@ -26,18 +24,20 @@ df = pd.read_csv(url, compression='gzip', low_memory=False)
     for col in year_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
-    # Standardize string codes
+    # Standardize string codes by removing leading apostrophes
     df['Area Code (M49)'] = df['Area Code (M49)'].astype(str).str.replace("'", "", regex=False)
     df['Item Code (CPC)'] = df['Item Code (CPC)'].astype(str).str.replace("'", "", regex=False)
     
-    # Rename columns for programmatic friendliness
+    # Rename columns for cleaner programmatic accessibility
     df = df.rename(columns={
-        'Area': 'Area_Name', 'Item': 'Item_Name', 
-        'Element': 'Element_Name', 'Unit': 'Unit_Name'
+        'Area': 'Area_Name', 
+        'Item': 'Item_Name', 
+        'Element': 'Element_Name', 
+        'Unit': 'Unit_Name'
     })
     return df, year_cols
 
-# Load data
+# Load data safely
 try:
     df, year_columns = load_and_clean_data(CSV_URL)
 except Exception as e:
@@ -55,10 +55,10 @@ selected_element = st.sidebar.selectbox("Select Metric Type", element_types, ind
 unique_areas = sorted(df['Area_Name'].unique().tolist())
 selected_area = st.sidebar.selectbox("Select Country / Region", unique_areas, index=unique_areas.index('World') if 'World' in unique_areas else 0)
 
-# Filter data based on choices before grabbing unique items
+# Filter data dynamically based on choices before grabbing unique items
 filtered_by_area_element = df[(df['Area_Name'] == selected_area) & (df['Element_Name'] == selected_element)]
 
-# Multi-select for items (Defaulting to top 3 items available)
+# Multi-select for items (Defaulting to the top 3 items available in selection)
 available_items = sorted(filtered_by_area_element['Item_Name'].unique().tolist())
 default_items = filtered_by_area_element['Item_Name'].value_counts().head(3).index.tolist()
 selected_items = st.sidebar.multiselect("Select Items to Compare", available_items, default=default_items)
@@ -79,7 +79,7 @@ melted_df = final_df.melt(id_vars=['Item_Name', 'Unit_Name'], value_vars=year_co
 melted_df['Year'] = melted_df['Year'].str[1:].astype(int)
 aggregated_df = melted_df.groupby(['Item_Name', 'Year', 'Unit_Name'])['Value'].sum().reset_index()
 
-# Layout Split into two columns for metrics and time series
+# Layout Split into two columns for metrics and timeline charts
 col1, col2 = st.columns([1, 3])
 
 with col1:
@@ -90,7 +90,7 @@ with col1:
     st.caption(f"Reporting Unit: **{unit_used}**")
 
 with col2:
-    # Plot 1: Time Series Trend
+    # Plot 1: Historical Time Series Trend
     st.subheader("Historical Timeline (1961 - 2024)")
     fig1, ax1 = plt.subplots(figsize=(12, 5.5))
     sns.lineplot(x='Year', y='Value', hue='Item_Name', data=aggregated_df, marker='o', palette='tab10', ax=ax1)
@@ -101,7 +101,7 @@ with col2:
 
 st.write("---")
 
-# Row 2: Correlation Matrix & Data Preview
+# Row 2: Correlation Matrix Heatmap & Data Preview Table
 col3, col4 = st.columns(2)
 
 with col3:
