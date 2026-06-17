@@ -11,7 +11,7 @@ st.set_page_config(page_title="FAO Livestock & Crop Production Dashboard", layou
 GITHUB_USERNAME = "raventrana"
 REPO_NAME = "FaoLivestockData"
 FILE_PATH = "Production_Crops_Livestock_E_All_Data.csv.gz"
-CSV_URL = f"https://raw.githubusercontent.com/{GITHUB_USERNAME}/{REPO_NAME}/main/{FILE_PATH}"
+CSV_URL = f"https://raw.githubusercontent.com/ { GITHUB_USERNAME } / { REPO_NAME } /main/ { FILE_PATH } "
 
 @st.cache_data
 def load_and_clean_data(url):
