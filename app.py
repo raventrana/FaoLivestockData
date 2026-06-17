@@ -7,15 +7,17 @@ import seaborn as sns
 st.set_page_config(page_title="FAO Livestock & Crop Production Dashboard", layout="wide")
 
 # --- DATA LOADING (with caching so it stays fast) ---
-GITHUB_USERNAME = "your_github_username"
-REPO_NAME = "your_repository_name"
-FILE_PATH = "Production_Crops_Livestock_E_All_Data.csv"
+# NEW CODE (Correct Path)
+GITHUB_USERNAME = "raventrana"
+REPO_NAME = "FaoLivestockData"
+FILE_PATH = "Production_Crops_Livestock_E_All_Data.csv.gz"
 CSV_URL = f"https://raw.githubusercontent.com/{GITHUB_USERNAME}/{REPO_NAME}/main/{FILE_PATH}"
 
 @st.cache_data
 def load_and_clean_data(url):
     # Load dataset
-    df = pd.read_csv(url, low_memory=False)
+    # NEW CODE
+df = pd.read_csv(url, compression='gzip', low_memory=False)
     
     # Identify year columns (Y1961 - Y2024)
     year_cols = [col for col in df.columns if col.startswith('Y') and col[1:].isdigit() and len(col) == 5]
